@@ -5,6 +5,10 @@ if !exists('g:notification_sound_cmd')
     let g:notification_sound_cmd = ''
 endif
 
+if !exists('g:notification_sound_silent')
+    let g:notification_sound_silent = v:false
+endif
+
 let s:messages = []
 
 let s:shown = []
@@ -18,18 +22,22 @@ function! notification#messages()
     return s:messages
 endfunction
 
-function! notification#open(msg)
+function! notification#open(msg, spec)
     try
-        call s:notification_create(a:msg)
+        call s:notification_create(a:msg, a:spec)
     catch
         let s:shown = []
         let s:win_is_open = v:false
-        call s:notification_create(a:msg)
+        call s:notification_create(a:msg, a:spec)
     endtry
 endfunction
 
-function! s:notification_create(msg)
-    if !s:win_is_open && g:notification_sound_cmd != ''
+function! s:notification_create(msg, spec)
+    let sound_silent = get(a:spec, 'sound_silent', v:false)
+    let sound_force = get(a:spec, 'sound_force', v:false)
+    let should_play_sound = sound_force || !sound_silent && !g:notification_sound_silent && g:notification_sound_cmd != ''
+
+    if should_play_sound
         let timer_id = timer_start(2, function('s:sound_play'), {'repeat' : 1})
     endif
 
